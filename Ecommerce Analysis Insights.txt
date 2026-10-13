@@ -1,0 +1,99 @@
+E-commerce Marketplace SQL Analysis — Key Insights
+
+Project overview
+
+This analysis uses a user-level marketplace activity dataset containing 98,913 records and 24 columns. The SQL was run in SQLite using a browser-based playground.
+
+The dataset contains user profile and activity fields such as country, language, products sold, social followers, and product pass rate. It is not a transaction-level dataset: it does not provide order-level records, product prices, revenue, costs, or profit. The findings below describe recorded user activity, not financial performance.
+
+Key findings
+
+• Seller participation is low
+
+• Total user records: 98,913.
+• Users with productsSold > 0: 2,036 (2.06%).
+• Users with productsSold = 0: 96,877 (97.94%).
+• Total recorded products sold: 12,027.
+• Average recorded products sold per user across the full dataset: 0.12 (12,027 divided by 98,913; rounded to two decimals).
+• Average recorded products sold per user among users with at least one sale: 5.91.
+
+Interpretation: only a small share of users have recorded sales. This may justify investigating seller activation, but the dataset does not explain why most users have no recorded sales or whether they intended to sell.
+
+• Product pass rate is highly skewed toward zero
+
+• Users with productsPassRate = 0: 97,979 (approximately 99.06%).
+• Users with productsPassRate > 0: 934 (approximately 0.94%).
+• Null values in productsPassRate: 0 in the observed dataset.
+• Observed minimum and maximum: 0 and 100.
+• Overall average productsPassRate: 0.8123.
+
+When grouped by pass-rate status:
+
+Pass-rate group	Users	Average products sold	Total products sold	Users who sold products
+Zero pass rate	97,979	0.01	1,373	1,102
+Positive pass rate	934	11.41	10,654	934
+
+Interpretation: the positive-pass-rate group accounts for approximately 88.6% of recorded products sold (10,654 of 12,027), and all 934 users in this group have productsSold > 0. This is a strong association in this dataset, but it does not establish causation. The exact business definition of productsPassRate has not been verified, so zero should not automatically be interpreted as poor performance.
+
+• Seller participation differs by country
+
+The following results include only countries with at least 500 users, as specified by the query's HAVING COUNT(*) >= 500 filter.
+
+Country as stored in dataset	Total users	Active sellers	Seller participation	Total products sold
+Italie	8,015	347	4.33%	2,820
+Pays-Bas	1,529	54	3.53%	214
+Autriche	624	18	2.88%	67
+France	25,135	713	2.84%	3,014
+Royaume-Uni	11,310	289	2.56%	1,806
+Belgique	1,666	35	2.10%	114
+Espagne	5,706	119	2.09%	990
+Suède	1,826	32	1.75%	336
+Suisse	859	14	1.63%	45
+Allemagne	6,567	105	1.60%	536
+Hong Kong	854	10	1.17%	50
+Danemark	1,892	22	1.16%	50
+Finlande	661	6	0.91%	20
+Etats-Unis	20,602	150	0.73%	967
+Australie	2,719	10	0.37%	35
+Canada	1,577	2	0.13%	7
+
+Interpretation: among countries meeting the 500-user threshold, Italy has the highest seller participation rate (4.33%). France has the largest number of active sellers (713) and the largest total products sold (3,014) among the listed countries. The United States has 150 active sellers among 20,602 users (0.73%). These are descriptive differences; the query does not explain why they occur, and small seller counts can make rates sensitive to individual records.
+
+• Top recorded sellers
+
+The top ten users ranked by productsSold had values of 174, 170, 163, 152, 125, 123, 108, 106, 104, and 92. The highest recorded value was 174 products sold. The ranking uses ROW_NUMBER() and sorts by productsSold descending, with identifierHash as a deterministic tie-breaker.
+
+Interpretation: the query identifies the users with the highest recorded sales counts. It does not measure revenue, profit, or lifetime value. identifierHash is a dataset identifier and should not be treated as a real-world identity.
+
+• The demonstration country lookup is incomplete
+
+A small lookup table was created with only four country codes: us, gb, fr, and mc.
+
+A LEFT JOIN produced:
+
+• Total users: 98,913.
+• Users matched to the four-code lookup: 57,083 (57.71%).
+• Users not matched to that lookup: 41,830 (42.29%).
+
+Interpretation: unmatched rows are expected because the lookup table is only a teaching example with four codes. This result does not mean 42.29% of users have missing country information. A complete, validated country-code lookup would be required for comprehensive country-name mapping.
+
+Recommended follow-up questions
+
+• What does productsPassRate mean in the dataset documentation, and how are zero values generated?
+• Does the dataset define which users are intended to be sellers, or does it mix buyers, sellers, and other users?
+• How do seller participation and sales counts vary by language, app usage, or account seniority?
+• Are country-level differences stable when using minimum group-size thresholds or confidence intervals?
+• Can the data owner provide transaction-level records and price fields for a separate revenue analysis?
+
+Limitations
+
+• Results describe this dataset only; its representativeness and collection period have not been established here.
+• Country names are retained as stored in the data, including French labels such as Italie, Pays-Bas, and Etats-Unis.
+• The definition of productsPassRate has not been independently confirmed.
+• Correlation between pass rate and sales does not establish causation.
+• The four-country lookup table is incomplete and must not be used as a complete mapping.
+• No revenue, price, cost, profit, or order-level analysis is possible from the columns used in this project.
+
+Methodology
+
+The analysis uses SQLite SQL features including filtering (WHERE), sorting (ORDER BY), aggregation (COUNT, SUM, AVG, MIN, MAX), grouping (GROUP BY, HAVING), conditional expressions (CASE), subqueries, INNER JOIN, LEFT JOIN, common table expressions (CTEs), and the ROW_NUMBER() window function.
